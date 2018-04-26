@@ -233,7 +233,8 @@ class Sale:
             )
         )
 
-    def authorize_payments(self, amount, description="Payment from sale"):
+    def authorize_payments(
+            self, amount, description="Payment from sale", threshold=0):
         """
         Authorize sale payments. It actually creates payment transactions
         corresponding to sale payments and set the payment processing state to
@@ -242,7 +243,7 @@ class Sale:
         if self.payment_processing_state:
             self._raise_sale_payments_waiting()
 
-        if amount > self.payment_available:
+        if (amount - self.payment_available) > threshold:
             self.raise_user_error(
                 "insufficient_amount_to_authorize", error_args=(
                     amount,
@@ -279,7 +280,8 @@ class Sale:
 
         return transactions
 
-    def capture_payments(self, amount, description="Payment from sale"):
+    def capture_payments(
+            self, amount, description="Payment from sale", threshold=0):
         """Capture sale payments.
 
         * If existing authorizations exist, capture them
@@ -288,7 +290,8 @@ class Sale:
         if self.payment_processing_state:
             self._raise_sale_payments_waiting()
 
-        if amount > (self.payment_available + self.payment_authorized):
+        if (amount - self.payment_available - self.payment_authorized) > \
+                threshold:
             self.raise_user_error(
                 "insufficient_amount_to_capture", error_args=(
                     amount,
