@@ -487,8 +487,7 @@ class Sale:
 
         PaymentTransaction.capture([payment_transaction])
 
-    def handle_transactions_failure(self, transactions, **kwargs):
-        """Handle Failed Transaction"""
+    def handle_payment_transactions_failure(self, transactions, **kwargs):
         pass
 
     def process_pending_payments(self, **kwargs):
@@ -524,7 +523,7 @@ class Sale:
             return
         self.save()
 
-        self.handle_transactions_failure(txns, **kwargs)
+        self.handle_payment_transactions_failure(txns, **kwargs)
 
     @classmethod
     def process_all_pending_payments(cls):
