@@ -487,21 +487,26 @@ class Sale:
 
         PaymentTransaction.capture([payment_transaction])
 
-    def process_pending_payments(self):
+    def handle_transactions_failure(self, transactions, **kwargs):
+        """Handle Failed Transaction"""
+        pass
+
+    def process_pending_payments(self, **kwargs):
         """Process waiting payments for corresponding sale.
         """
         PaymentTransaction = Pool().get('payment_gateway.transaction')
 
+        # Transactions waiting for auth or capture.
+        txns = PaymentTransaction.search([
+            ('sale_payment.sale', '=', self.id),
+            ('state', '!=', 'failed')
+        ])
         if self.payment_processing_state == "waiting_for_auth":
             for payment in self.sorted_payments:
                 payment.authorize()
             self.payment_processing_state = None
 
         elif self.payment_processing_state == "waiting_for_capture":
-            # Transactions waiting for capture.
-            txns = PaymentTransaction.search([
-                ('sale_payment.sale', '=', self.id),
-            ])
 
             # Settle authorized transactions
             PaymentTransaction.settle(filter(
@@ -518,6 +523,8 @@ class Sale:
             # Weird! Why was I called if there is nothing to do
             return
         self.save()
+
+        self.handle_transactions_failure(txns, **kwargs)
 
     @classmethod
     def process_all_pending_payments(cls):
